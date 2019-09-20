@@ -47,7 +47,8 @@ class TwitterBotPlugin extends GenericPlugin {
                         array(
                           'verb' => 'settings',
                           'plugin' => $this->getName(),
-                          'category' => 'generic')),
+                          'category' => 'generic')
+                        ),
             $this->getDisplayName()
           ),
           'Bot settings',
@@ -56,6 +57,35 @@ class TwitterBotPlugin extends GenericPlugin {
       ):array(),
       parent::getActions($request, $verb)
     );
+  }
+
+  /**
+   * Launch actions
+   * 1 .- Bot settings
+   */
+  function manage($args, $request) {
+    switch ($request->getUserVar('verb')) {
+      case 'settings':
+        $context = $request->getContext();
+
+        $templateMgr = TemplateManager::getManager($request);
+        $templateMgr->registerPlugin('function', 'plugin_url', array($this, 'smartyPluginUrl'));
+
+        $this->import('TwitterBotSettingsForm');
+        $form = new TwitterBotSettingsForm($this, $context->getId());
+
+        if ($request->getUserVar('save')) {
+          $form->readInputData();
+          if ($form->validate()) {
+            $form->execute();
+            return new JSONMessage(true);
+          }
+        } else {
+          $form->initData();
+        }
+        return new JSONMessage(true, $form->fetch($request));
+    }
+    return parent::manage($args, $request);
   }
 
 }
